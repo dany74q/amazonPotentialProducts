@@ -57,9 +57,24 @@ AmazonPotentialProductsLocator.prototype.locate = function() {
             return $('#zg_centerListWrapper div.zg_itemWrapper div.zg_title a').map(function () { return this.href; }).toArray();
         });
     });
+    var that = this;
     this.casper.then(function() {
-        products.forEach(function(item) {
-            console.log(item);
+        products.forEach(function (itemUrl) {
+            that.casper.thenOpen(itemUrl);
+            that.casper.then(function() {
+                var title = this.evaluate(function () { return $('#productTitle').text(); });
+                var price = this.evaluate(function () { return $('#priceblock_ourprice').text(); });
+                var weight = this.evaluate(function () {
+                    var result = $('#detail-bullets div.content li:contains(Shipping Weight)').Text() || 
+                    return  $('#detail-bullets div.content li:contains(Shipping Weight)').text().match(/[0-9]+ (pounds|ounces)/g)[0] ||
+                            .match(/[0-9]+ (pounds|ounces)/g)[0];
+                });
+                var bsr = this.evaluate(function() {
+                    return  $('#detail-bullets div.content li:contains(Best Sellers Rank)').text().match(/#[0-9]+ in [a-zA-Z]+/g)[0] ||
+                            $('tr#SalesRank td.value').text().match(/#[0-9]+ in [a-zA-Z]+/g)[0];
+                });
+                console.log('Title - ' + title, ' price - ' + price + ' weight - ' + weight + ' bsr - ' + bsr);
+            });
         });
     })
     this.casper.run();
