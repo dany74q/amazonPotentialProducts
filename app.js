@@ -65,15 +65,36 @@ AmazonPotentialProductsLocator.prototype.locate = function() {
                 var title = this.evaluate(function () { return $('#productTitle').text(); });
                 var price = this.evaluate(function () { return $('#priceblock_ourprice').text(); });
                 var weight = this.evaluate(function () {
-                    var result = $('#detail-bullets div.content li:contains(Shipping Weight)').Text() || 
-                    return  $('#detail-bullets div.content li:contains(Shipping Weight)').text().match(/[0-9]+ (pounds|ounces)/g)[0] ||
-                            .match(/[0-9]+ (pounds|ounces)/g)[0];
+                    var result = $('#detail-bullets div.content li:contains(Shipping Weight)').text() ||
+                        $('tr.shipping-weight td.value').text();
+                    if (!result) { return 'No weight information';}
+                    return result.match(/[0-9.,]+ (pounds|ounces)/g)[0];
                 });
-                var bsr = this.evaluate(function() {
-                    return  $('#detail-bullets div.content li:contains(Best Sellers Rank)').text().match(/#[0-9]+ in [a-zA-Z]+/g)[0] ||
-                            $('tr#SalesRank td.value').text().match(/#[0-9]+ in [a-zA-Z]+/g)[0];
+                var bsr = this.evaluate(function () {
+                    var result = $('#detail-bullets div.content li:contains(Best Sellers Rank)').text() ||
+                        $('tr#SalesRank td.value').text();
+                    return  result.match(/#[0-9.,]+ in [a-zA-Z]+/g)[0];
                 });
-                console.log('Title - ' + title, ' price - ' + price + ' weight - ' + weight + ' bsr - ' + bsr);
+                var soldBy = this.evaluate(function () {
+                    var soldBy = $('#merchant-info').text();
+                    if (soldBy.search('Ships from and sold by Amazon') != -1) { return 'Amazon'; }
+                    else if ($('#merchant-info > a:nth-child(1)').text()) { return $('#merchant-info > a:nth-child(1)').text(); }
+                    else { return 'This item is only available on another website.'; }
+                });
+                var numOfReviews = this.evaluate(function () {
+                    return $('#acrCustomerWriteReviewText').text() ?
+                        '0' : $('#acrCustomerReviewText').text().match(/[0-9.,]+/g)[0];
+                });
+                var reviewRank = this.evaluate(function () {
+                    var result = $('#avgRating > span > a > span').text();
+                    return result ? result.match(/[0-9.,]+/g)[0] : 'No reviews';
+                });
+                var url = this.getCurrentUrl();
+                var asin = this.evaluate(function () {
+                    var result = $('#detail-bullets li:contains(ASIN)').text() || $('#prodDetails td.label:contains(ASIN)').next().text();
+                    return result.match(/[A-Z0-9]{10}/g)[0];
+                });
+                console.log('URL - ' + url + '\nASIN - ' + asin + '\nTitle - ' + title, '\nPrice - ' + price + '\nWeight - ' + weight + '\nBsr - ' + bsr + '\nSold by ' + soldBy + '\nNumber of reviews - ' + numOfReviews + '\nReview rank - ' + reviewRank);
             });
         });
     })
